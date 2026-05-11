@@ -1,0 +1,59 @@
+# inplay 로컬 인프라 (Podman compose)
+# 사용:
+#   podman compose -f infra/compose/podman-compose.yml up -d
+#   podman compose -f infra/compose/podman-compose.yml down
+
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: inplay-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo-init:
+    image: mongo:7
+    container_name: inplay-mongo-init
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: "no"
+    entrypoint:
+      - bash
+      - -c
+      - |
+        mongosh --host mongo:27017 --quiet --eval '
+        try {
+          rs.status();
+        } catch (e) {
+          rs.initiate({_id: "rs0", members: [{_id: 0, host: "mongo:27017"}]});
+          print("Replica set initiated");
+        }
+        '
+
+  mongo-express:
+    image: mongo-express:1.0
+    container_name: inplay-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_URL: "mongodb://mongo:27017/?replicaSet=rs0"
+      ME_CONFIG_BASICAUTH_USERNAME: ""
+      ME_CONFIG_BASICAUTH_PASSWORD: ""
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully
+
+volumes:
+  mongo-data:

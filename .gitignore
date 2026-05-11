@@ -1,0 +1,77 @@
+# === Secrets ===
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+
+# === Java / Gradle ===
+.gradle/
+build/
+out/
+*.class
+*.jar
+*.war
+hs_err_pid*
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+target/
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+
+# === Python (trainer) ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+.ipynb_checkpoints/
+
+# === ML artifacts (large files) ===
+python/trainer/data/raw/
+python/trainer/data/processed/
+python/trainer/runs/
+python/trainer/mlruns/
+python/trainer/wandb/
+*.pt
+*.pth
+*.ckpt
+*.h5
+
+# === ONNX models (commit explicitly under modules/ml-inference/src/main/resources/models/) ===
+# (commit only inside ml-inference module, ignore everywhere else)
+*.onnx
+!modules/ml-inference/src/main/resources/models/**/*.onnx
+
+# === MongoDB local data ===
+infra/compose/data/
+infra/compose/mongo-data/
+
+# === OS ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Logs ===
+*.log
+logs/
+log/
+
+# === IDE ===
+.metals/
+.bloop/
+.history/

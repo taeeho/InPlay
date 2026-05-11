@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: inplay
+  threads:
+    virtual:
+      enabled: true
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/inplay}
+  security:
+    user:
+      name: dev
+      password: dev   # local-only, prod는 API key filter로 대체
+
+server:
+  port: 8080
+  tomcat:
+    threads:
+      max: 200
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+inplay:
+  default-user:
+    name: ${INPLAY_DEFAULT_USER_NAME:taeeho}
+    team: ${INPLAY_DEFAULT_USER_TEAM:HH}
+    timezone: ${INPLAY_DEFAULT_USER_TIMEZONE:Asia/Seoul}
+    mute-window:
+      start: ${INPLAY_DEFAULT_USER_MUTE_START:08:00}
+      end: ${INPLAY_DEFAULT_USER_MUTE_END:10:00}
+    discord-webhook: ${INPLAY_DEFAULT_DISCORD_WEBHOOK:}
+  collector:
+    polling:
+      schedule-interval: 5m
+      live-game-interval: 30s
+      offseason-news-interval: 1h
+    user-agent: "inplay-bot/0.1 (https://github.com/taeeho/InPlay; learning purpose; contact via github)"
+    rate-limit-per-minute: 60
+  ml:
+    model-dir: ${INPLAY_MODEL_DIR:modules/ml-inference/src/main/resources/models}
+  notion:
+    api-key: ${NOTION_API_KEY:}
+    page-id: ${NOTION_INPLAY_PAGE_ID:}
+
+logging:
+  level:
+    com.inplay: DEBUG
+    org.springframework.web: INFO
+    org.springframework.data.mongodb: INFO
