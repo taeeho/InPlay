@@ -1,0 +1,53 @@
+name: CI
+
+# 빌드는 항상 podman + docker.io/gradle:8.10-jdk21 컨테이너 안에서.
+# host JDK 버전(GH runner의 Java)과 무관하게 컨테이너 안 JDK 21이 사용된다.
+# 로컬과 동일하게 `make compile` / `make test` 실행.
+
+on:
+  push:
+    branches:
+      - main
+      - "chore/**"
+      - "feat/**"
+      - "fix/**"
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: compile + test (podman / JDK 21 container)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify podman + make
+        run: |
+          podman --version
+          make --version | head -n 1
+
+      - name: Pre-pull gradle image
+        run: podman pull docker.io/gradle:8.10-jdk21
+
+      - name: make compile
+        run: make compile
+
+      - name: make test
+        run: make test
+
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            modules/**/build/reports/tests/**
+            modules/**/build/test-results/**
+          if-no-files-found: ignore
+          retention-days: 7

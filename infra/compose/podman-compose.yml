@@ -2,6 +2,11 @@
 # 사용:
 #   podman compose -f infra/compose/podman-compose.yml up -d
 #   podman compose -f infra/compose/podman-compose.yml down
+#
+# 초기화 흐름:
+#   mongo (healthy)
+#     -> mongo-init (rs.initiate + timeseries 컬렉션 + 인덱스, 멱등)
+#     -> mongo-express
 
 version: "3.8"
 
@@ -16,10 +21,25 @@ services:
       - mongo-data:/data/db
     command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      # ping은 mongod 기동 여부만 본다. 단일 노드 rs0이므로 PRIMARY까지
+      # 확인되어야 application driver가 안전하게 붙는다.
+      # rs.status()는 init 전엔 실패하므로 'NotYetInitialized'(94)는 허용.
+      test:
+        - "CMD"
+        - "mongosh"
+        - "--quiet"
+        - "--eval"
+        - >-
+          try {
+            const s = rs.status();
+            quit(s.myState === 1 ? 0 : 1);
+          } catch (e) {
+            quit(e.code === 94 ? 0 : 1);
+          }
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 20s
 
   mongo-init:
     image: mongo:7
@@ -28,18 +48,18 @@ services:
       mongo:
         condition: service_healthy
     restart: "no"
+    volumes:
+      - ./mongo-init:/init:ro
     entrypoint:
       - bash
       - -c
       - |
-        mongosh --host mongo:27017 --quiet --eval '
-        try {
-          rs.status();
-        } catch (e) {
-          rs.initiate({_id: "rs0", members: [{_id: 0, host: "mongo:27017"}]});
-          print("Replica set initiated");
-        }
-        '
+        set -euo pipefail
+        for f in /init/*.js; do
+          echo "[mongo-init] running $$f"
+          mongosh --host mongo:27017 --quiet --file "$$f"
+        done
+        echo "[mongo-init] all init scripts completed"
 
   mongo-express:
     image: mongo-express:1.0
