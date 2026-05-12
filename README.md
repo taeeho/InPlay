@@ -44,20 +44,48 @@
 
 ## 시작하기 (개발자용)
 
+> **모든 빌드·테스트·실행은 podman 컨테이너 안에서 동작합니다.** Host JDK 버전(예: Java 25)과 무관하게 컨테이너 안의 JDK 21이 사용됩니다. host에 Java/Gradle 설치 불필요.
+
+### 사전 요구사항
+- Podman (`brew install podman` → `podman machine init && podman machine start`)
+- Make (macOS 기본 포함)
+
+### 1. 환경 변수
 ```bash
-# 1. 환경 변수 설정
 cp .env.example .env
-# .env 편집해서 본인 Discord webhook URL 등 입력
-
-# 2. MongoDB + 의존 인프라 기동
-podman compose -f infra/compose/podman-compose.yml up -d
-
-# 3. Spring Boot 실행
-./gradlew :modules:api:bootRun
-
-# 4. 테스트
-./gradlew test
+# .env 편집해서 본인 Discord webhook URL 입력
 ```
+
+### 2. 빌드·테스트 (Make 명령)
+```bash
+make help        # 전체 명령 보기
+make compile     # 전 모듈 컴파일
+make test        # 전 모듈 테스트
+make build       # 컴파일 + 테스트
+make tasks       # gradle tasks 목록
+make shell       # 컨테이너 안 bash shell (디버깅)
+```
+
+직접 호출 (Make 없이):
+```bash
+./scripts/podman-gradle.sh :modules:core:test
+./scripts/podman-gradle.sh build
+```
+
+### 3. MongoDB 기동
+```bash
+make mongo-up        # podman compose up -d
+make mongo-logs      # 로그 tail
+make mongo-down      # stop
+```
+
+### 4. Spring Boot 실행
+```bash
+./scripts/podman-gradle.sh :modules:api:bootRun
+```
+
+### Gradle 캐시 위치
+컨테이너 빌드 캐시는 podman named volume `inplay-gradle-cache`에 저장 (다음 빌드 빠름). 초기화: `podman volume rm inplay-gradle-cache`.
 
 ## Plan 문서
 

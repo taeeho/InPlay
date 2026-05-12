@@ -22,6 +22,13 @@
 - **Python(trainer)**: 운영 코드 X, 학습 전용. 산출물(ONNX)만 commit
 - **패키지명**: `com.inplay.{module}` 단일 root
 
+## 빌드 환경 (불변)
+
+- **모든 gradle 빌드는 podman 컨테이너 안에서 실행** (`docker.io/gradle:8.10-jdk21`)
+- **Host JDK 버전 무관** (개발 host는 Java 25, 컨테이너는 JDK 21 고정)
+- **사용 명령**: `make compile`, `make test`, `make build`, `./scripts/podman-gradle.sh <task>`
+- **Host에 직접 `gradle` 또는 `./gradlew` 호출 금지** — host JDK·gradle 버전 차이로 빌드 깨짐
+
 ## 도메인 규칙
 
 - **응원팀·라이벌리 가중치는 절대 하드코딩 X** — `user` 컬렉션 데이터로
