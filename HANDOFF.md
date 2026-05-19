@@ -30,28 +30,35 @@
 - [x] HANDOFF.md + docs/PLAN.md (본 문서)
 
 ### 완료 (W1 — 코드 골격)
-- [x] **feat/w1-core** — modules/core/** 도메인 record + 54 invariant tests (머지 `0936d4c`)
-- [x] **chore/w1-ops** — mongo-init scripts + CI workflow + ADR-001~007 (머지 `7fa2b34`)
-- [x] **feat/w1-collector** — RestClient + RobotsGuard + RateLimiter + KboScheduleClient/Parser/Service + 25 tests (머지 `f1b56aa`)
-- [x] **feat/w1-ingest** — GameDocument + Repository + Mapper + IngestService + 9 unit / 4 integration tests (머지 `461548f`)
+- [x] **core** — 도메인 record + 54 invariant tests (`0936d4c`)
+- [x] **ops** — mongo-init + CI workflow + ADR-001~007 (`7fa2b34`)
+- [x] **collector(HTTP)** — RestClient + RobotsGuard + RateLimiter + KboHttpScheduleSource + 25 tests (`f1b56aa`)
+- [x] **ingest** — GameDocument + Repository + Mapper + IngestService + 9 unit / 4 integration tests (`461548f`)
 - [x] **ADR-008** Accepted — KBO 공식 `/Schedule/Schedule.aspx` 채택. Statiz/Naver/Daum은 robots/ToS 차단으로 폐기 (`docs/adr/notes/adr-008-source-survey.md`).
 - [x] **ADR-009** Accepted — Playwright headless 회색지대 운영 조건 (UA 명시, 분당 1회, `/ws/` AJAX `route.abort`, 베타 5~10명 한정).
+- [x] **collector(headless)** — `ScheduleSource` 인터페이스 + `KboHeadlessScheduleSource` (Playwright) + `PageRenderer` 추상화 + `@ConditionalOnProperty` http/headless 분기 + 8 tests (`e14ff7d`)
 
-### 진행 중 (W1 마무리)
-- [ ] **collector Playwright 통합 PR** — 현재 jsoup-only → headless 하이브리드. `ScheduleSource` 인터페이스 분리, application.yml URL 주입, integration test 환경(podman socket).
-- [ ] **W1 게이트 재해석**: "7일 경기 100% 수집"은 headless 통합 후로 미룸. 코드 게이트(`make test`)는 통과(79 tests).
+### 완료 (W2 — 학습·추론 파이프라인 골격)
+- [x] **trainer skeleton** — `python/trainer/win_prob/`. data_schema + feature engineering (7 features, 시간 누설 방지) + LightGBM train + ONNX export + Python parity check + fixture CSV (`2c7d149`)
+- [x] **ml-inference Java ONNX** — `WinProbabilityFeatures` record + `WinProbabilityPredictor` (OrtSession 래퍼) + parity test (`@EnabledIf` ONNX 산출물 존재 시 자동 활성) + 6 unit tests (`72a4a59`)
+
+### 진행 중 (W2 마무리)
+- [ ] **Discord brief 발송** — `decision`에 brief 생성기, `notify`에 webhook client, `api`에 `@Scheduled` daily 08:00, application.yml 설정, 단위 테스트(mock RestClient)
+- [ ] **(사용자 행동) trainer host venv 검증** — `cd python/trainer && python -m venv venv && source venv/bin/activate && pip install -r requirements.txt && pytest` 통과 확인
+- [ ] **(사용자 행동) 학습 데이터 준비** — Wikipedia 시즌 페이지 + 본인 수기로 `season,date,home_team,away_team,home_score,away_score` CSV 모음
+- [ ] **(사용자 행동) ONNX 학습 + commit** — host에서 train_lgbm.py + export_onnx.py 돌려 `modules/ml-inference/src/main/resources/models/v1/winprob.onnx` + `parity_sample.json` commit → Java parity test 자동 활성
 
 ### ⚠️ W1 결정적 발견 — 합법 자동 수집 source 부재
 사용자 + Claude Code의 사람 확인(2026-05-19) 결과 한국 야구 일정 4개 후보(Statiz/Naver/Daum/KBO) 모두 ADR-005 보수 원칙(robots 자동 봇 직접 fetch)으로는 일정 데이터 수집 **불가**. 상세는 `docs/adr/notes/adr-008-source-survey.md`.
 
 ADR-009로 headless 회색지대 운영 결정 — KBO `/Schedule/Schedule.aspx`만 Playwright로 SSR된 DOM 파싱, `/ws/`는 직접 호출 X. 베타 5~10명 한정, 데이터 재배포 X, KBO ToS에 자동 렌더링 금지 명시 발견 시 즉시 중단.
 
-후속 옵션: 사용자가 KBO 공식 측 베타 사용 문의 (정식 협력).
-
 ### 대기 (사용자 1회 작업)
 - [ ] Notion DB 6개 수동 생성 (Notion UI에서 `/database` Inline. 칼럼 정의는 각 페이지 본문 참조). W6 전까지만 OK.
 - [ ] (W7~W8 시점) 베타 친구 5~10명 명단 (이름·응원팀·Discord webhook URL)
-- [ ] (선택) KBO 공식 측 베타 사용 문의 메일
+- [ ] **KBO ToS 사람 확인** — `/Schedule/` 페이지 자동 렌더링 금지 조항 존재 여부. headless 모드 활성 직전 게이트 (ADR-009).
+- [ ] **Playwright Chromium 셋업** — headless 모드 첫 실행 전. `Makefile`의 `GRADLE_IMAGE`를 `mcr.microsoft.com/playwright/java`로 swap이 가장 간단(A안). W1 데이터 게이트 통과 직전에.
+- [ ] (선택) **KBO 공식 측 베타 사용 문의 메일** — 정식 협력 시 ADR-009 회색지대 해소.
 
 ---
 
@@ -69,9 +76,10 @@ ADR-009로 headless 회색지대 운영 결정 — KBO `/Schedule/Schedule.aspx`
 - [ ] **데이터 게이트**: 7일 경기 100% 수집 — collector Playwright 통합 PR 이후로 미룸
 
 ### W2 — Pre-game 브리핑 + 베이스라인 ML
-- [ ] LightGBM 승률 모델 (Python) + ONNX export
-- [ ] Java ONNX Runtime 통합 + parity test
-- [ ] 매일 08:00 Discord brief 발송
+- [x] LightGBM 승률 모델 코드 (Python) + ONNX export 파이프라인 — `python/trainer/win_prob/`
+- [x] Java ONNX Runtime 통합 + parity test 스켈레톤 (`@EnabledIf` ONNX 산출물 존재 시 자동 활성)
+- [ ] 매일 08:00 Discord brief 발송 — decision/notify/api 통합 (다음 작업)
+- [ ] **데이터 게이트**: 사용자가 host venv에서 trainer 검증 + 학습 데이터 모으고 ONNX commit → parity 통과
 - [ ] **Gate**: holdout 50경기 accuracy ≥ 0.58, 7일 연속 brief 수신
 
 ### W3 — 실시간 이벤트 + WPA
@@ -256,6 +264,7 @@ inplay/
 | Notion 루트 | https://www.notion.so/InPlay-35dbc507d1ef80abac81cb5318e96c78 | Claude Code MCP integration 연결됨 |
 | Discord webhook | `.env`의 `INPLAY_DEFAULT_DISCORD_WEBHOOK` | gitignored |
 | KBO 공식 | https://www.koreabaseball.com | 매너 폴링, robots allow `/Schedule/`만, **headless 렌더링 (ADR-009)** |
+| Wikipedia (ko) | https://ko.wikipedia.org/wiki/2025년_KBO_리그 | W2 학습 데이터 1차. CC-BY-SA. robots 깨끗 — 시즌별 페이지 시즌 요약·최종 순위·포스트시즌 결과만(144경기 row는 없음). |
 | Statiz | ~~https://www.statiz.co.kr~~ | **폐기** — robots.txt가 inplay UA 차단 + ToS 무단 이용 금지 |
 | Naver Sports | ~~m.sports.naver.com~~ | **폐기** — robots `*` Disallow `/` |
 | Daum Sports | ~~sports.daum.net~~ | **폐기** — SPA + 제3자 재배포 |
@@ -266,10 +275,33 @@ inplay/
 
 ## 다음 즉각 액션 (이 문서 기준 시점, 2026-05-19)
 
-1. **collector Playwright 통합 PR** (W1 마무리)
-   - `ScheduleSource` 인터페이스 분리 (jsoup HTTP → headless 어댑터 가능하게)
-   - Playwright Java 의존성 + Chromium 컨테이너 환경
-   - ADR-009 운영 조건 코드화 (UA, route.abort, polling)
-   - integration test에 podman socket 마운트 또는 별도 host 실행 환경
-2. **W2 준비** — LightGBM Pre-game brief. historical 데이터는 사용자가 수동 또는 KBO 공식 협의 후 확보.
-3. (선택) **KBO 공식 측 베타 사용 문의 메일** — 사용자 행동. 정식 협력 시 ADR-009 회색지대 해소.
+### 1. Discord brief 발송 (W2 마무리, Claude 작업)
+- `modules/decision` — `WinProbabilityBrief` 생성기 (모델 추론 결과 + 홈/원정 + 사용자 응원팀 강조)
+- `modules/notify` — `DiscordWebhookClient` (webhook POST, mock RestClient로 단위 테스트)
+- `modules/api` — `@Scheduled` daily 08:00 trigger + application.yml 설정
+- ONNX 모델 산출물 없어도 진행 가능 — `null` predictor 가드 또는 "모델 미준비" 메시지
+
+### 2. (사용자 행동) trainer host 검증
+```bash
+cd python/trainer
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+pytest
+```
+- 12개 테스트(data_schema 5 + train_lgbm 1 + export_onnx 1 + features 추가)가 fixture로 통과해야.
+- 통과 후 본격 데이터 모음 + 학습.
+
+### 3. (사용자 행동) 학습 데이터 모음 + ONNX commit
+- `python/trainer/win_prob/fixtures/` 대신 실 CSV (또는 별도 path) 준비.
+- `python -m win_prob.train_lgbm --csv data/season.csv --out runs/v1`
+- `python -m win_prob.export_onnx --booster runs/v1/winprob_lgbm.txt --onnx modules/ml-inference/src/main/resources/models/v1/winprob.onnx --sample modules/ml-inference/src/main/resources/models/v1/parity_sample.json`
+- 두 산출물 commit → Java parity test 자동 활성.
+
+### 4. (사용자 결정 후 Claude) KBO ToS 확인 + Playwright Chromium 셋업
+- 사용자가 KBO `/Schedule/` 페이지의 ToS에 자동 렌더링/스크래핑 금지 조항 없는지 확인.
+- 통과 시 Makefile `GRADLE_IMAGE`을 `mcr.microsoft.com/playwright/java`로 swap (A안) → integration test에서 실 KBO fetch 검증.
+- W1 데이터 게이트 통과("7일 경기 100% 수집").
+
+### 5. W3 시작 (네이버 라이브 polling)
+- W2 brief가 7일 안정 발송 + W4 마일스톤 압박 시점에 진입.
+- Naver Sports는 robots 차단 → DrissionPage Python sidecar 패턴 평가 (CLAUDE.md crawling-tool-selection wiki 참조).
