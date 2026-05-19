@@ -1,0 +1,17 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+runs/
+mlruns/
+
+# 원본 학습 데이터는 commit X (라이선스·용량). fixtures/ 만 OK.
+win_prob/data/
+win_prob/raw/
+*.parquet
+*.feather
+
+# 학습 산출 ONNX는 modules/ml-inference/ 로 commit. trainer 안에는 임시만.
+win_prob/*.onnx
