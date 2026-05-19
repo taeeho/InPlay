@@ -16,7 +16,7 @@
 
 ---
 
-## 현재 상태 (마지막 갱신: 2026-05-14)
+## 현재 상태 (마지막 갱신: 2026-05-19)
 
 ### 완료 (W0 — 골격)
 - [x] Plan 승인 + 메모리 등록
@@ -29,17 +29,29 @@
 - [x] 사용자 준비물: GitHub repo · Discord webhook · Notion 페이지 · 라이벌리 가중치
 - [x] HANDOFF.md + docs/PLAN.md (본 문서)
 
-### 진행 중 (W1)
-- [ ] **feat/w1-core** — modules/core/** 도메인 record + invariant 테스트 22+
-- [ ] **chore/w1-ops** — infra/compose/mongo-init/ + .github/workflows/ci.yml + docs/adr/ADR-001~007
-- [ ] **feat/w1-collector** (대기) — modules/collector/** KBO 일정 수집기·robots.txt 가드
-- [ ] **feat/w1-ingest** (대기) — modules/ingest/** MongoDB Document·Repository·Testcontainers
+### 완료 (W1 — 코드 골격)
+- [x] **feat/w1-core** — modules/core/** 도메인 record + 54 invariant tests (머지 `0936d4c`)
+- [x] **chore/w1-ops** — mongo-init scripts + CI workflow + ADR-001~007 (머지 `7fa2b34`)
+- [x] **feat/w1-collector** — RestClient + RobotsGuard + RateLimiter + KboScheduleClient/Parser/Service + 25 tests (머지 `f1b56aa`)
+- [x] **feat/w1-ingest** — GameDocument + Repository + Mapper + IngestService + 9 unit / 4 integration tests (머지 `461548f`)
+- [x] **ADR-008** Accepted — KBO 공식 `/Schedule/Schedule.aspx` 채택. Statiz/Naver/Daum은 robots/ToS 차단으로 폐기 (`docs/adr/notes/adr-008-source-survey.md`).
+- [x] **ADR-009** Accepted — Playwright headless 회색지대 운영 조건 (UA 명시, 분당 1회, `/ws/` AJAX `route.abort`, 베타 5~10명 한정).
 
-머지 순서: `core` 먼저 → `collector`/`ingest`/`ops` 병렬 → main.
+### 진행 중 (W1 마무리)
+- [ ] **collector Playwright 통합 PR** — 현재 jsoup-only → headless 하이브리드. `ScheduleSource` 인터페이스 분리, application.yml URL 주입, integration test 환경(podman socket).
+- [ ] **W1 게이트 재해석**: "7일 경기 100% 수집"은 headless 통합 후로 미룸. 코드 게이트(`make test`)는 통과(79 tests).
+
+### ⚠️ W1 결정적 발견 — 합법 자동 수집 source 부재
+사용자 + Claude Code의 사람 확인(2026-05-19) 결과 한국 야구 일정 4개 후보(Statiz/Naver/Daum/KBO) 모두 ADR-005 보수 원칙(robots 자동 봇 직접 fetch)으로는 일정 데이터 수집 **불가**. 상세는 `docs/adr/notes/adr-008-source-survey.md`.
+
+ADR-009로 headless 회색지대 운영 결정 — KBO `/Schedule/Schedule.aspx`만 Playwright로 SSR된 DOM 파싱, `/ws/`는 직접 호출 X. 베타 5~10명 한정, 데이터 재배포 X, KBO ToS에 자동 렌더링 금지 명시 발견 시 즉시 중단.
+
+후속 옵션: 사용자가 KBO 공식 측 베타 사용 문의 (정식 협력).
 
 ### 대기 (사용자 1회 작업)
 - [ ] Notion DB 6개 수동 생성 (Notion UI에서 `/database` Inline. 칼럼 정의는 각 페이지 본문 참조). W6 전까지만 OK.
 - [ ] (W7~W8 시점) 베타 친구 5~10명 명단 (이름·응원팀·Discord webhook URL)
+- [ ] (선택) KBO 공식 측 베타 사용 문의 메일
 
 ---
 
@@ -48,11 +60,13 @@
 `docs/PLAN.md` §8 / §9 참조. 게이트 통과 시 체크.
 
 ### W1 — 골격·수집 파이프라인
-- [ ] core 도메인 record + invariant 테스트 22+
-- [ ] collector KBO API + robots.txt 가드 + RestClient
-- [ ] ingest MongoDB Document + Repository + Testcontainers
-- [ ] infra mongo-init script + CI workflow + ADR 7개
-- [ ] **Gate**: `make test` 통과, 7일 경기 100% 수집, robots 위반 0건
+- [x] core 도메인 record + 54 invariant 테스트
+- [x] collector KBO HTTP client + robots.txt 가드 + RateLimiter (jsoup, headless 통합은 후속)
+- [x] ingest MongoDB Document + Repository + Testcontainers(integration tag)
+- [x] infra mongo-init script + CI workflow + ADR-001~007
+- [x] ADR-008/009 — source 결정 + headless 회색지대 운영
+- [x] **코드 게이트**: `make test` 통과 (79 tests, robots 위반 0)
+- [ ] **데이터 게이트**: 7일 경기 100% 수집 — collector Playwright 통합 PR 이후로 미룸
 
 ### W2 — Pre-game 브리핑 + 베이스라인 ML
 - [ ] LightGBM 승률 모델 (Python) + ONNX export
@@ -102,18 +116,20 @@
 
 ```bash
 git worktree list
-# /Users/hataeho/Documents/inplay            [main]
-# /Users/hataeho/Documents/inplay-w1-core    [feat/w1-core]
-# /Users/hataeho/Documents/inplay-w1-coll    [feat/w1-collector]
-# /Users/hataeho/Documents/inplay-w1-ingest  [feat/w1-ingest]
-# /Users/hataeho/Documents/inplay-w1-ops     [chore/w1-ops]
+# /Users/hataeho/Documents/inplay            [main]                     ← 작업 기준
+# /Users/hataeho/Documents/inplay-w1-coll    [feat/w1-collector]        ← 머지 완료, 후속 정리 가능
+# /Users/hataeho/Documents/inplay-w1-core    [feat/w1-core]             ← 머지 완료
+# /Users/hataeho/Documents/inplay-w1-ingest  [feat/w1-ingest]           ← 머지 완료
+# /Users/hataeho/Documents/inplay-w1-ops     [chore/w1-ops]             ← 머지 완료
 ```
+
+W1 브랜치 4개 모두 main에 머지 완료. 후속 작업(Playwright 통합 등)은 새 브랜치(`feat/w1-collector-headless` 등) 따서 진행.
 
 병렬 작업 룰:
 - 각 브랜치는 자기 모듈 디렉토리만 수정
-- `application.yml`은 ingest 한 명만 수정 (다른 yml은 한 명만)
+- `application.yml`은 한 명만 수정
 - 루트 파일 (`build.gradle.kts`/`Makefile`/`README`/`CLAUDE.md`) 수정 시 별도 PR
-- 커밋 후 `git push -u origin <branch>`. PR 머지는 사용자가 직접.
+- 커밋 메시지는 사전 텍스트로 제시 후 사용자 승인 (자동 커밋 X)
 
 ---
 
@@ -239,15 +255,21 @@ inplay/
 | GitHub repo | https://github.com/taeeho/InPlay | |
 | Notion 루트 | https://www.notion.so/InPlay-35dbc507d1ef80abac81cb5318e96c78 | Claude Code MCP integration 연결됨 |
 | Discord webhook | `.env`의 `INPLAY_DEFAULT_DISCORD_WEBHOOK` | gitignored |
-| KBO 공식 | https://www.koreabaseball.com | 매너 폴링, robots.txt 준수 |
-| Statiz | https://statiz.sporki.com | 공개 통계 |
+| KBO 공식 | https://www.koreabaseball.com | 매너 폴링, robots allow `/Schedule/`만, **headless 렌더링 (ADR-009)** |
+| Statiz | ~~https://www.statiz.co.kr~~ | **폐기** — robots.txt가 inplay UA 차단 + ToS 무단 이용 금지 |
+| Naver Sports | ~~m.sports.naver.com~~ | **폐기** — robots `*` Disallow `/` |
+| Daum Sports | ~~sports.daum.net~~ | **폐기** — SPA + 제3자 재배포 |
+
+상세: `docs/adr/ADR-008-kbo-source-selection.md`, `docs/adr/notes/adr-008-source-survey.md`.
 
 ---
 
-## 다음 즉각 액션 (이 문서 기준 시점)
+## 다음 즉각 액션 (이 문서 기준 시점, 2026-05-19)
 
-1. (커밋·push 끝) 다른 worktree 작업자들이 main 변경 가져가게 알리기
-2. core 작업 끝나면 main에 머지 → 다른 worktree에 rebase
-3. ops 작업 끝나면 main에 머지
-4. main 최신을 collector/ingest worktree에 rebase 후 작업 시작
-5. W1 게이트 통과 (7일 경기 100% 수집) → W2 시작
+1. **collector Playwright 통합 PR** (W1 마무리)
+   - `ScheduleSource` 인터페이스 분리 (jsoup HTTP → headless 어댑터 가능하게)
+   - Playwright Java 의존성 + Chromium 컨테이너 환경
+   - ADR-009 운영 조건 코드화 (UA, route.abort, polling)
+   - integration test에 podman socket 마운트 또는 별도 host 실행 환경
+2. **W2 준비** — LightGBM Pre-game brief. historical 데이터는 사용자가 수동 또는 KBO 공식 협의 후 확보.
+3. (선택) **KBO 공식 측 베타 사용 문의 메일** — 사용자 행동. 정식 협력 시 ADR-009 회색지대 해소.
