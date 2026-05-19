@@ -9,16 +9,16 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
-public final class KboScheduleService {
+public final class KboHttpScheduleSource implements ScheduleSource {
 
-    private static final String RATE_LIMIT_KEY = "kbo:schedule";
+    private static final String RATE_LIMIT_KEY = "kbo:schedule:http";
 
     private final KboScheduleClient client;
     private final KboScheduleParser parser;
     private final RobotsGuard robotsGuard;
     private final PollingRateLimiter rateLimiter;
 
-    public KboScheduleService(
+    public KboHttpScheduleSource(
             KboScheduleClient client,
             KboScheduleParser parser,
             RobotsGuard robotsGuard,
@@ -29,6 +29,7 @@ public final class KboScheduleService {
         this.rateLimiter = Objects.requireNonNull(rateLimiter, "rateLimiter required");
     }
 
+    @Override
     public List<Game> fetchSchedule(LocalDate from, LocalDate to) {
         var url = client.buildUrl(from, to);
         robotsGuard.enforce(url, CollectorUserAgent.VALUE);

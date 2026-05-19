@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
-class KboScheduleServiceTest {
+class KboHttpScheduleSourceTest {
 
     private static final URI SCHEDULE_URL = URI.create("http://kbo.example/schedule");
     private static final LocalDate FROM = LocalDate.of(2026, 5, 12);
@@ -39,8 +39,8 @@ class KboScheduleServiceTest {
         return new Fixture(builder.build(), server);
     }
 
-    private KboScheduleService newService(RestClient http, RobotsGuard robots, PollingRateLimiter limiter) {
-        return new KboScheduleService(
+    private KboHttpScheduleSource newService(RestClient http, RobotsGuard robots, PollingRateLimiter limiter) {
+        return new KboHttpScheduleSource(
                 new KboScheduleClient(http, SCHEDULE_URL),
                 new KboScheduleParser(),
                 robots,
