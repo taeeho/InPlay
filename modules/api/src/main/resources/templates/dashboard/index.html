@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>inplay — KBO dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+    <style>
+        .team { font-weight: 600; }
+        .team.mine { color: var(--pico-primary); }
+        .score { font-variant-numeric: tabular-nums; }
+        .brief { white-space: pre-wrap; font-size: 0.9rem; color: var(--pico-muted-color); margin-top: 0.25rem; }
+        .pill { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.75rem; background: var(--pico-muted-border-color); }
+        .pill.live { background: var(--pico-primary); color: white; }
+        .pill.final { background: var(--pico-secondary); color: white; }
+        .row { display: grid; grid-template-columns: 80px 1fr auto auto; gap: 1rem; align-items: baseline; padding: 0.5rem 0; border-bottom: 1px solid var(--pico-muted-border-color); }
+    </style>
+</head>
+<body>
+<main class="container">
+    <header style="display: flex; justify-content: space-between; align-items: baseline;">
+        <hgroup>
+            <h2>inplay</h2>
+            <p>KBO 동반시청 대시보드 — <span th:text="${user.name}">user</span> (응원팀: <span class="team mine" th:text="${user.team}">HH</span>)</p>
+        </hgroup>
+        <small th:text="${today}">2026-05-20</small>
+    </header>
+
+    <section id="today-section">
+        <div th:replace="~{dashboard/_today :: today}">today fragment</div>
+    </section>
+
+    <section>
+        <h3>최근 7일</h3>
+        <div th:if="${recent.isEmpty()}">
+            <p><em>최근 일주일 경기 데이터 없음. <code>collector</code>가 아직 안 돌았거나 비시즌입니다.</em></p>
+        </div>
+        <div th:each="row : ${recent}" class="row">
+            <span th:text="${row.date}">date</span>
+            <span>
+                <span class="team" th:classappend="${row.awayTeam.name() == user.team.name() ? 'mine' : ''}" th:text="${row.awayTeam}">AWAY</span>
+                @
+                <span class="team" th:classappend="${row.homeTeam.name() == user.team.name() ? 'mine' : ''}" th:text="${row.homeTeam}">HOME</span>
+            </span>
+            <span class="score" th:if="${row.isFinal()}" th:text="|${row.awayScore} - ${row.homeScore}|">0-0</span>
+            <span class="score" th:unless="${row.isFinal()}">—</span>
+            <span class="pill" th:classappend="${row.isFinal() ? 'final' : ''}" th:text="${row.status}">STATUS</span>
+        </div>
+    </section>
+
+    <footer>
+        <small>로컬 베타 · ADR-005 합법 안전선 준수 · <a href="https://github.com/taeeho/InPlay">GitHub</a></small>
+    </footer>
+</main>
+</body>
+</html>

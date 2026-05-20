@@ -1,0 +1,33 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="today" id="today-block">
+    <header style="display: flex; justify-content: space-between; align-items: baseline;">
+        <h3>오늘 일정 (<span th:text="${today}">date</span>)</h3>
+        <button class="outline" hx-get="/dashboard/today" hx-target="#today-block" hx-swap="outerHTML" hx-indicator="#today-spinner" style="margin: 0;">
+            새로고침
+        </button>
+    </header>
+    <progress id="today-spinner" class="htmx-indicator" style="height: 4px;"></progress>
+
+    <div th:if="${rows.isEmpty()}">
+        <p><em>오늘 예정된 KBO 경기가 없습니다.</em></p>
+    </div>
+
+    <article th:each="row : ${rows}" style="margin: 0.5rem 0;">
+        <div class="row">
+            <span>
+                <span class="team" th:classappend="${row.awayTeam.name() == user.team.name() ? 'mine' : ''}" th:text="${row.awayTeam}">AWAY</span>
+                @
+                <span class="team" th:classappend="${row.homeTeam.name() == user.team.name() ? 'mine' : ''}" th:text="${row.homeTeam}">HOME</span>
+            </span>
+            <span></span>
+            <span class="score" th:if="${row.isFinal()}" th:text="|${row.awayScore} - ${row.homeScore}|">0-0</span>
+            <span class="score" th:unless="${row.isFinal()}">—</span>
+            <span class="pill" th:classappend="${row.isFinal() ? 'final' : (row.status == 'LIVE' ? 'live' : '')}" th:text="${row.status}">STATUS</span>
+        </div>
+        <div class="brief" th:if="${row.briefMarkdown}" th:text="${row.briefMarkdown}">brief preview</div>
+    </article>
+</div>
+</body>
+</html>

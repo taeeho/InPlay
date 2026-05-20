@@ -42,6 +42,9 @@
 - [x] **trainer skeleton** — `python/trainer/win_prob/`. data_schema + feature engineering (7 features, 시간 누설 방지) + LightGBM train + ONNX export + Python parity check + fixture CSV (`2c7d149`)
 - [x] **ml-inference Java ONNX** — `WinProbabilityFeatures` record + `WinProbabilityPredictor` (OrtSession 래퍼) + parity test (`@EnabledIf` ONNX 산출물 존재 시 자동 활성) + 6 unit tests (`72a4a59`)
 
+### 완료 (W2.5 — Thymeleaf + HTMX 미니 대시보드, ADR-010, 2026-05-20)
+- [x] **dashboard** (`feat/w2-dashboard`) — `modules/api/dashboard/`. `GET /` 오늘 KBO 일정 + brief preview + 최근 7일 결과. `GET /dashboard/today` HTMX fragment. Pico.css CDN + htmx 2.0.3. WebMvcTest 3개. PLAN.md §0 "별도 웹 UI W8까지 cut" 결정 뒤집기 — 풀스택 어필 + 본인 사용 시 brief preview 가능.
+
 ### 완료 (W2 — 학습·추론 + brief 발송 파이프라인)
 - [x] **Discord brief 발송 파이프라인** (`feat/w2-discord-brief`)
   - `modules/decision/brief/` — `WinProbabilityBrief` record + `WinProbabilityFeatureBuilder` (Python features.py와 동일 정의 + 시간 누설 방지) + `BriefGenerator` (predictor null/feature 부족 시 graceful) + `BriefFormatter` (Discord markdown, 응원팀 강조)

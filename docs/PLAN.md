@@ -42,7 +42,7 @@
 | Stack | Java 21 LTS + Spring Boot 3.3 + MongoDB 7 + ONNX Runtime Java + Podman |
 | 학습 환경 | Python(PyTorch + LightGBM) → ONNX export → JVM 추론 |
 | 알림 채널 | Discord webhook |
-| UI | Notion (자동 일지) + Discord (실시간 알림). 별도 웹 UI W8까지 cut |
+| UI | Notion (자동 일지) + Discord (실시간 알림) + Thymeleaf/HTMX 미니 대시보드 (ADR-010, 2026-05-20 추가) |
 | 응원팀 | 본인 default 한화 (사용자별 설정 가능, 데이터·모델은 10구단 모두) |
 | 사용자 모드 | 소규모 베타 5~10명 (본인 + 친구), 간단 API key 인증 |
 | 배포 모드 | local-first. `.env` Supabase/Vercel 값 있으면 사용, 없으면 로컬 fallback |
