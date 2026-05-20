@@ -33,6 +33,11 @@ inplay:
       start: ${INPLAY_DEFAULT_USER_MUTE_START:08:00}
       end: ${INPLAY_DEFAULT_USER_MUTE_END:10:00}
     discord-webhook: ${INPLAY_DEFAULT_DISCORD_WEBHOOK:}
+  brief:
+    scheduler:
+      enabled: ${INPLAY_BRIEF_SCHEDULER_ENABLED:true}
+    cron: ${INPLAY_BRIEF_CRON:0 0 8 * * *}
+    timezone: ${INPLAY_BRIEF_TIMEZONE:Asia/Seoul}
   collector:
     polling:
       schedule-interval: 5m
