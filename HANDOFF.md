@@ -16,7 +16,7 @@
 
 ---
 
-## 현재 상태 (마지막 갱신: 2026-05-19)
+## 현재 상태 (마지막 갱신: 2026-05-20)
 
 ### 완료 (W0 — 골격)
 - [x] Plan 승인 + 메모리 등록
@@ -42,11 +42,18 @@
 - [x] **trainer skeleton** — `python/trainer/win_prob/`. data_schema + feature engineering (7 features, 시간 누설 방지) + LightGBM train + ONNX export + Python parity check + fixture CSV (`2c7d149`)
 - [x] **ml-inference Java ONNX** — `WinProbabilityFeatures` record + `WinProbabilityPredictor` (OrtSession 래퍼) + parity test (`@EnabledIf` ONNX 산출물 존재 시 자동 활성) + 6 unit tests (`72a4a59`)
 
-### 진행 중 (W2 마무리)
-- [ ] **Discord brief 발송** — `decision`에 brief 생성기, `notify`에 webhook client, `api`에 `@Scheduled` daily 08:00, application.yml 설정, 단위 테스트(mock RestClient)
+### 완료 (W2 — 학습·추론 + brief 발송 파이프라인)
+- [x] **Discord brief 발송 파이프라인** (`feat/w2-discord-brief`)
+  - `modules/decision/brief/` — `WinProbabilityBrief` record + `WinProbabilityFeatureBuilder` (Python features.py와 동일 정의 + 시간 누설 방지) + `BriefGenerator` (predictor null/feature 부족 시 graceful) + `BriefFormatter` (Discord markdown, 응원팀 강조)
+  - `modules/notify/discord/` — `DiscordWebhookClient` (RestClient, 2xx/4xx/5xx/network 오류 swallow + 로그) + `DiscordWebhookPayload` + `DiscordConfig`
+  - `modules/api/brief/` — `WinProbabilityPredictorConfig` (ONNX 파일 존재 시만 로드) + `DailyBriefService` (today 게임 loop) + `DailyBriefScheduler` (`@Scheduled` cron 08:00 KST, `@ConditionalOnProperty`로 테스트 환경 비활성 가능) + `DefaultUserProperties`
+  - application.yml: `inplay.brief.{scheduler.enabled, cron, timezone}` + 기존 default-user webhook 재사용
+  - **테스트 20개 추가** (decision 10 + notify 6 + api 4). `make test` 전 모듈 BUILD SUCCESSFUL (Docker host 2m 01s)
+
+### 진행 중 (W2 데이터 게이트)
 - [ ] **(사용자 행동) trainer host venv 검증** — `cd python/trainer && python -m venv venv && source venv/bin/activate && pip install -r requirements.txt && pytest` 통과 확인
 - [ ] **(사용자 행동) 학습 데이터 준비** — Wikipedia 시즌 페이지 + 본인 수기로 `season,date,home_team,away_team,home_score,away_score` CSV 모음
-- [ ] **(사용자 행동) ONNX 학습 + commit** — host에서 train_lgbm.py + export_onnx.py 돌려 `modules/ml-inference/src/main/resources/models/v1/winprob.onnx` + `parity_sample.json` commit → Java parity test 자동 활성
+- [ ] **(사용자 행동) ONNX 학습 + commit** — host에서 train_lgbm.py + export_onnx.py 돌려 `modules/ml-inference/src/main/resources/models/v1/winprob.onnx` + `parity_sample.json` commit → Java parity test + brief에서 실제 확률 자동 활성
 
 ### ⚠️ W1 결정적 발견 — 합법 자동 수집 source 부재
 사용자 + Claude Code의 사람 확인(2026-05-19) 결과 한국 야구 일정 4개 후보(Statiz/Naver/Daum/KBO) 모두 ADR-005 보수 원칙(robots 자동 봇 직접 fetch)으로는 일정 데이터 수집 **불가**. 상세는 `docs/adr/notes/adr-008-source-survey.md`.
@@ -78,7 +85,7 @@ ADR-009로 headless 회색지대 운영 결정 — KBO `/Schedule/Schedule.aspx`
 ### W2 — Pre-game 브리핑 + 베이스라인 ML
 - [x] LightGBM 승률 모델 코드 (Python) + ONNX export 파이프라인 — `python/trainer/win_prob/`
 - [x] Java ONNX Runtime 통합 + parity test 스켈레톤 (`@EnabledIf` ONNX 산출물 존재 시 자동 활성)
-- [ ] 매일 08:00 Discord brief 발송 — decision/notify/api 통합 (다음 작업)
+- [x] 매일 08:00 Discord brief 발송 — decision/notify/api 통합 (`feat/w2-discord-brief`, 2026-05-20)
 - [ ] **데이터 게이트**: 사용자가 host venv에서 trainer 검증 + 학습 데이터 모으고 ONNX commit → parity 통과
 - [ ] **Gate**: holdout 50경기 accuracy ≥ 0.58, 7일 연속 brief 수신
 
@@ -273,13 +280,11 @@ inplay/
 
 ---
 
-## 다음 즉각 액션 (이 문서 기준 시점, 2026-05-19)
+## 다음 즉각 액션 (이 문서 기준 시점, 2026-05-20)
 
-### 1. Discord brief 발송 (W2 마무리, Claude 작업)
-- `modules/decision` — `WinProbabilityBrief` 생성기 (모델 추론 결과 + 홈/원정 + 사용자 응원팀 강조)
-- `modules/notify` — `DiscordWebhookClient` (webhook POST, mock RestClient로 단위 테스트)
-- `modules/api` — `@Scheduled` daily 08:00 trigger + application.yml 설정
-- ONNX 모델 산출물 없어도 진행 가능 — `null` predictor 가드 또는 "모델 미준비" 메시지
+### 1. (사용자 행동) `feat/w2-discord-brief` → main 머지
+- 브랜치 push 완료. GitHub PR에서 머지 클릭 → 본 워크트리에서 `git pull` 후 후속 작업.
+- 머지 전 sanity: 한 번이라도 `make test` 통과 확인했으면 OK (Docker host 2m 01s, 본 머신 검증됨).
 
 ### 2. (사용자 행동) trainer host 검증
 ```bash
@@ -295,13 +300,17 @@ pytest
 - `python/trainer/win_prob/fixtures/` 대신 실 CSV (또는 별도 path) 준비.
 - `python -m win_prob.train_lgbm --csv data/season.csv --out runs/v1`
 - `python -m win_prob.export_onnx --booster runs/v1/winprob_lgbm.txt --onnx modules/ml-inference/src/main/resources/models/v1/winprob.onnx --sample modules/ml-inference/src/main/resources/models/v1/parity_sample.json`
-- 두 산출물 commit → Java parity test 자동 활성.
+- 두 산출물 commit → Java parity test + brief에서 실제 확률 자동 활성.
 
 ### 4. (사용자 결정 후 Claude) KBO ToS 확인 + Playwright Chromium 셋업
 - 사용자가 KBO `/Schedule/` 페이지의 ToS에 자동 렌더링/스크래핑 금지 조항 없는지 확인.
 - 통과 시 Makefile `GRADLE_IMAGE`을 `mcr.microsoft.com/playwright/java`로 swap (A안) → integration test에서 실 KBO fetch 검증.
 - W1 데이터 게이트 통과("7일 경기 100% 수집").
 
-### 5. W3 시작 (네이버 라이브 polling)
+### 5. (Claude, brief 발송 검증 — 데이터 게이트 후)
+- 실 webhook + 실 game 데이터로 `DailyBriefService.sendBriefsForToday()` 1회 dry-run.
+- 7일 연속 cron 발송 확인 (W2 Gate).
+
+### 6. W3 시작 (네이버 라이브 polling)
 - W2 brief가 7일 안정 발송 + W4 마일스톤 압박 시점에 진입.
 - Naver Sports는 robots 차단 → DrissionPage Python sidecar 패턴 평가 (CLAUDE.md crawling-tool-selection wiki 참조).
