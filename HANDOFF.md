@@ -16,7 +16,7 @@
 
 ---
 
-## 현재 상태 (마지막 갱신: 2026-05-20)
+## 현재 상태 (마지막 갱신: 2026-05-21)
 
 ### 완료 (W0 — 골격)
 - [x] Plan 승인 + 메모리 등록
@@ -53,6 +53,14 @@
   - application.yml: `inplay.brief.{scheduler.enabled, cron, timezone}` + 기존 default-user webhook 재사용
   - **테스트 20개 추가** (decision 10 + notify 6 + api 4). `make test` 전 모듈 BUILD SUCCESSFUL (Docker host 2m 01s)
 
+### 완료 (W3 — 실시간 이벤트 + WPA 코드 게이트, 2026-05-21)
+- [x] **WPA 엔진** (`15f2f38`) — `modules/decision/wpa/`. Bases / GameState record + RunExpectancy (MLB FanGraphs 2010-2020 RE24 baseline) + WinExpectancy (홈팀 시점 정규근사, Abramowitz erf, gameOver clamp 0/0.5/1) + WpaCalculator. 27 invariant tests.
+- [x] **live_event timeseries 적재** (`86c41c8`) — `modules/core/event/` (LiveEvent + LiveEventType + PitchInfo record) + `modules/ingest/event/` (LiveEventDocument [timeseries meta sub-doc] + Repository + Mapper + LiveEventIngestService). Caffeine 60s TTL dedupe (Mongo timeseries unique index 불가 → app-side primary). Testcontainers IT 포함 16 tests.
+- [x] **WPA ↔ live_event wiring** (`2db54d2`) — LiveEvent.withWpaAfter + LiveEventStateMapper (LiveEvent → GameState) + WpaAnnotator (wpa_after = WE_home 스탬프). 10 tests.
+- [x] **ADR-011** Accepted — WPA rule-based MVP + KBO 캘리브레이션 plan + 알려진 한계 (gameOver=false, model_version 미스탬프).
+- [x] **Codex 검토 반영** 두 사이클 (`444f901`, `62fad80`) — LiveEvent 컨벤션 주석 + IngestService 한계 명시.
+- [x] **코드 게이트**: 전 모듈 `gradle test` BUILD SUCCESSFUL (총 단위 테스트 ~130개+).
+
 ### 진행 중 (W2 데이터 게이트)
 - [ ] **(사용자 행동) trainer host venv 검증** — `cd python/trainer && python -m venv venv && source venv/bin/activate && pip install -r requirements.txt && pytest` 통과 확인
 - [ ] **(사용자 행동) 학습 데이터 준비** — Wikipedia 시즌 페이지 + 본인 수기로 `season,date,home_team,away_team,home_score,away_score` CSV 모음
@@ -66,7 +74,7 @@ ADR-009로 headless 회색지대 운영 결정 — KBO `/Schedule/Schedule.aspx`
 ### 대기 (사용자 1회 작업)
 - [ ] Notion DB 6개 수동 생성 (Notion UI에서 `/database` Inline. 칼럼 정의는 각 페이지 본문 참조). W6 전까지만 OK.
 - [ ] (W7~W8 시점) 베타 친구 5~10명 명단 (이름·응원팀·Discord webhook URL)
-- [ ] **KBO ToS 사람 확인** — `/Schedule/` 페이지 자동 렌더링 금지 조항 존재 여부. headless 모드 활성 직전 게이트 (ADR-009).
+- [ ] **KBO ToS 사람 확인** — `/Schedule/` 페이지 자동 렌더링 금지 조항 존재 여부. headless 모드 활성 직전 게이트 (ADR-009). W3 라이브 polling 진입 게이트도 동일.
 - [ ] **Playwright Chromium 셋업** — headless 모드 첫 실행 전. `Makefile`의 `GRADLE_IMAGE`를 `mcr.microsoft.com/playwright/java`로 swap이 가장 간단(A안). W1 데이터 게이트 통과 직전에.
 - [ ] (선택) **KBO 공식 측 베타 사용 문의 메일** — 정식 협력 시 ADR-009 회색지대 해소.
 
@@ -93,10 +101,12 @@ ADR-009로 headless 회색지대 운영 결정 — KBO `/Schedule/Schedule.aspx`
 - [ ] **Gate**: holdout 50경기 accuracy ≥ 0.58, 7일 연속 brief 수신
 
 ### W3 — 실시간 이벤트 + WPA
-- [ ] 네이버 라이브 polling (30초), live_event timeseries 적재
-- [ ] WPA 계산 엔진 (rule-based, run expectancy table)
-- [ ] 디바운싱 (Caffeine cache + Mongo unique index)
-- [ ] **Gate**: 한 경기 풀 수집 누락 < 2%, WPA 합 ±0.05
+- [x] WPA 계산 엔진 (rule-based RE24 + 정규근사 WE, ADR-011, `15f2f38`)
+- [x] live_event timeseries 적재 (`86c41c8`)
+- [x] 디바운싱 (Caffeine 60s TTL — Mongo timeseries unique index 불가, app-side primary)
+- [x] WPA ↔ live_event wiring (`WpaAnnotator`, `2db54d2`)
+- [ ] 라이브 polling source 결정 — ADR-009 회색지대(KBO `/Schedule/`) 사용자 ToS 확인 게이트
+- [ ] **데이터 Gate**: 한 경기 풀 수집 누락 < 2%, ΔWE 합 ±0.05
 
 ### W4 — In-game 결정적 순간 감지 + Push
 - [ ] WPA + 투수 누적구수 + 위기 컨텍스트 → classifier (LightGBM)
