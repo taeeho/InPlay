@@ -16,7 +16,7 @@
 
 ---
 
-## 현재 상태 (마지막 갱신: 2026-05-21)
+## 현재 상태 (마지막 갱신: 2026-05-21, W4 코드 게이트 통과)
 
 ### 완료 (W0 — 골격)
 - [x] Plan 승인 + 메모리 등록
@@ -61,10 +61,25 @@
 - [x] **Codex 검토 반영** 두 사이클 (`444f901`, `62fad80`) — LiveEvent 컨벤션 주석 + IngestService 한계 명시.
 - [x] **코드 게이트**: 전 모듈 `gradle test` BUILD SUCCESSFUL (총 단위 테스트 ~130개+).
 
+### 완료 (W4 — In-game 결정적 순간 + Push 코드 게이트, 2026-05-21)
+- [x] **clutch trainer 스켈레톤** (`364b162`, `3070387`) — `python/trainer/clutch/`. data_schema(9컬럼) + features(7) + train_lgbm(game_id split + threshold 파라미터화) + export_onnx + parity. 12 pytest.
+- [x] **ml-inference clutch ONNX 래퍼** (`364b162`) — ClutchFeatures + ClutchPredictor + parity test 스켈레톤. 8 tests (1 EnabledIf-skipped).
+- [x] **decision/clutch ClutchDetector** (`d88bd8b`) — ClutchFeatureBuilder (Python features.py와 parity) + ClutchVerdict + ClutchDetector. 19 tests.
+- [x] **decision/clutch 정책 엔진** (`85857b0`, `fecbf86`) — RivalrySettings + ImportanceScore + ImportanceScorer + NotifyDecision + MuteWindow + ClutchNotifyPolicy. 21 tests. Clock injectable, recordSent 명시 호출.
+- [x] **chain wiring + Discord formatter** (`2213541`, `ef7d21b`) — `notify/discord/ClutchPushFormatter` + `api/clutch/{ClutchProperties, ClutchPredictorConfig, ClutchPolicyConfig, LiveEventClutchProcessor}`. application.yml `inplay.clutch.*` 외부화. DefaultUserProperties + muteWindow + rivalryWeights. 11 tests.
+- [x] **ADR-012** Accepted — Clutch 알림 4단계 필터 + retry semantics 결정 기록.
+- [x] **Codex 검토** 5 사이클 반영 (game_id split, MLB baseline 상수 이름, gameOver clamp 한계, dedupe 한계, retry semantics 등).
+- [x] **코드 게이트**: 전 모듈 `gradle test` BUILD SUCCESSFUL (총 ~190+ tests).
+
 ### 진행 중 (W2 데이터 게이트)
 - [ ] **(사용자 행동) trainer host venv 검증** — `cd python/trainer && python -m venv venv && source venv/bin/activate && pip install -r requirements.txt && pytest` 통과 확인
 - [ ] **(사용자 행동) 학습 데이터 준비** — Wikipedia 시즌 페이지 + 본인 수기로 `season,date,home_team,away_team,home_score,away_score` CSV 모음
 - [ ] **(사용자 행동) ONNX 학습 + commit** — host에서 train_lgbm.py + export_onnx.py 돌려 `modules/ml-inference/src/main/resources/models/v1/winprob.onnx` + `parity_sample.json` commit → Java parity test + brief에서 실제 확률 자동 활성
+
+### 진행 중 (W4 데이터 게이트)
+- [ ] **(사용자 행동) ride-along 5경기** — collector live polling 통과 후, 본인이 경기 보면서 fixture/sample_events.csv 형식(`game_id,event_seq,we_home_after/before,inning,score_margin_abs,runners_on,outs,clutch`)으로 라벨링
+- [ ] **(사용자 행동) clutch ONNX 학습 + commit** — `python -m clutch.train_lgbm --csv ride_along.csv --out runs/clutch/v1` → `python -m clutch.export_onnx --booster ... --onnx modules/ml-inference/src/main/resources/models/v1/clutch.onnx --sample clutch_parity_sample.json` → ClutchParityTest 자동 활성
+- [ ] **precision ≥ 0.7 검증** — train_lgbm metrics.json + 본인 평가
 
 ### ⚠️ W1 결정적 발견 — 합법 자동 수집 source 부재
 사용자 + Claude Code의 사람 확인(2026-05-19) 결과 한국 야구 일정 4개 후보(Statiz/Naver/Daum/KBO) 모두 ADR-005 보수 원칙(robots 자동 봇 직접 fetch)으로는 일정 데이터 수집 **불가**. 상세는 `docs/adr/notes/adr-008-source-survey.md`.
@@ -109,10 +124,12 @@ ADR-009로 headless 회색지대 운영 결정 — KBO `/Schedule/Schedule.aspx`
 - [ ] **데이터 Gate**: 한 경기 풀 수집 누락 < 2%, ΔWE 합 ±0.05
 
 ### W4 — In-game 결정적 순간 감지 + Push
-- [ ] WPA + 투수 누적구수 + 위기 컨텍스트 → classifier (LightGBM)
-- [ ] Discord push (cooldown 5분, dedupe, importance score)
-- [ ] **Gate**: 5경기 ride-along, 본인 평가 precision ≥ 0.7
-- [ ] 🎯 **W4 완성 = 채용 어필 최소 임계 통과**
+- [x] WPA + 위기 컨텍스트 → classifier 스켈레톤 (LightGBM, trainer/clutch + ml-inference/clutch)
+  - 투수 누적구수는 W5 LSTM 투수 한계 모델에서 결합 예정
+- [x] Discord push 파이프라인 (cooldown 5분 game_id + dedupe 1분 game+inning+half+type + importance score + mute window). ADR-012.
+- [x] **코드 게이트**: chain wiring + 4단계 필터 + 단위 테스트 (decision 47 + ml 8 + api/notify 11)
+- [ ] **데이터 Gate**: 5경기 ride-along + clutch 라벨링 → ONNX commit → ClutchParityTest 자동 활성 + 본인 평가 precision ≥ 0.7
+- [ ] 🎯 **W4 완성 = 채용 어필 최소 임계 통과** (코드는 통과, 데이터 게이트 대기)
 
 ### W5 — DL 모델 + 투수 한계 예측
 - [ ] LSTM 투수 한계 모델 (PyTorch → ONNX → Java)
