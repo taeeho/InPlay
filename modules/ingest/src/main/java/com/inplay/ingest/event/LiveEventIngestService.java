@@ -17,6 +17,12 @@ import java.util.Optional;
 //
 // Idempotent: same source_event_id seen within TTL → no-op, returns empty Optional.
 // Out-of-TTL duplicates (>60s) are accepted; downstream queries should de-dup on read if needed.
+//
+// Known limits (베타 5~10명 단일 프로세스 가정):
+//   - 재시작 시 cache 휘발 → 직전 60s 이벤트 재처리 시 중복 저장 가능
+//   - 다중 인스턴스 / 재처리 배치 → 프로세스별 별도 cache라 중복 가능
+//   - 크롤러 장애 복구 후 분 단위 재송신 → TTL 초과로 중복 저장 가능
+//   W4/W5 이전 운영 부담 커지면 source+source_event_id 별 영속 idempotency ledger 도입 검토.
 public class LiveEventIngestService {
 
     public static final Duration DEFAULT_DEDUPE_TTL = Duration.ofSeconds(60);
