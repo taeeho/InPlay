@@ -2,6 +2,16 @@
 
 작은 LSTM (hidden=16, 1 layer)으로 베타 데이터셋(~수백 outing)에서도 학습 가능.
 실제 KBO 데이터 충분히 모이면 hidden ↑, dropout ↑, multi-layer 확장.
+
+Split semantics (Codex 검토 반영):
+- 현재 outing 단위 split → "outing leak" 방지 (같은 등판의 pitch가 train/test 동시 출현 차단).
+- "pitcher leak"(같은 투수의 다른 등판이 train/test에 분산)은 아직 차단 X.
+  pitcher 정체성 자체가 feature가 아니라 베타에서는 outing split이면 충분하지만,
+  W5 본작업 시 본격 평가에서는 pitcher_id 단위 group split 옵션 추가 검토
+  (sklearn GroupKFold + pitcher_id 그룹).
+
+Drift 가드: 정규화 상수(speed-130/30 등)는 Python features.py와 Java PitcherLimitFeatures
+양쪽에 하드코딩. drift 방지 위해 W5 본작업에서 model_metadata.json export 검토.
 """
 from __future__ import annotations
 
@@ -62,7 +72,8 @@ def train(
     if len(outings) < 4:
         raise ValueError(f"need >= 4 distinct outing_ids, have {len(outings)}")
 
-    # outing 단위 split — pitcher_id leak 방지 핵심
+    # outing 단위 split — 같은 등판의 pitch가 train/test에 동시에 들어가는 'outing leak' 방지.
+    # NOTE: pitcher_id leak (같은 투수의 다른 등판이 양쪽에 분산)은 아직 차단 X — W5 본작업 시 GroupKFold 검토.
     holdout_n = max(int(round(len(outings) * holdout_ratio)), 1)
     X_train, X_holdout = X[:-holdout_n], X[-holdout_n:]
     y_train, y_holdout = y[:-holdout_n], y[-holdout_n:]
