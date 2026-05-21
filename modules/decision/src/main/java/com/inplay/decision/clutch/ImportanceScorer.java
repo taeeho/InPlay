@@ -24,7 +24,10 @@ public final class ImportanceScorer {
     private static final double WPA_CHANGE_REFERENCE = 0.5;     // 50%p swing은 max
     private static final double LEVERAGE_DIVISOR = 1.5;          // ClutchFeatures.leverageProxy max
     private static final double NEUTRAL_WEIGHT = 1.0;
-    private static final double NO_MY_TEAM_FLOOR = 0.7;
+    // 비관심 경기(my_team이 없고 라이벌리 보너스도 없는)는 0.5 — leverage+wpa 1.0이어도
+    // raw = 1.0 × 0.5 × 1.0 = 0.5 → 5점이라 threshold 3.0보다 위. 의도적: 본인 사용자가
+    // "한화팬이지만 LG-KIA도 본다"를 위한 floor. 완전히 끄려면 user 도메인에서 mute 필요.
+    private static final double NO_MY_TEAM_FLOOR = 0.5;
 
     public ImportanceScore score(ClutchVerdict verdict, Game game, LiveEvent previous,
                                  LiveEvent current, RivalrySettings settings) {

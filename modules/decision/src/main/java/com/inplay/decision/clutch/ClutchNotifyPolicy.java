@@ -19,8 +19,12 @@ import java.util.Objects;
  * <p>state는 Caffeine in-memory cache. 재시작 시 휘발 (운영상 베타 5~10명 단일 프로세스 OK).
  * Persistent 알림 ledger는 W7에서 user별 분기와 함께 검토.
  *
- * <p>{@link #recordSent} 는 실제 webhook 전송 후 호출자가 명시적으로 부르는 게 책임 분리.
+ * <p>{@link #recordSent} 는 실제 webhook 전송 <b>성공 후</b> 호출자가 명시적으로 부르는 게 책임 분리.
+ * webhook 실패 시 recordSent를 부르면 다음 시도가 COOLDOWN/DUPLICATE에 막혀 알림이 영영 안 나감 — wiring caveat.
  * decide() 자체는 read-only 라 멱등 (테스트하기 쉽게).
+ *
+ * <p>cooldown key는 game_id 단위 (의도) — PLAN.md §6 "동일 game_id 5분 내 중복 차단".
+ * 한 경기의 서로 다른 클러치 이벤트도 5분간 묶임. inning-level cooldown은 dedupe TTL이 담당.
  */
 public final class ClutchNotifyPolicy {
 
