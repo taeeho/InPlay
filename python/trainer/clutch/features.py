@@ -30,6 +30,7 @@ def build_features(events: pd.DataFrame) -> pd.DataFrame:
     leverage_proxy = wpa_change_abs * inning_progress * (1.0 + 0.5 * runners_on_norm)
 
     out = pd.DataFrame({
+        "game_id": df["game_id"].astype(str),  # split key — inference에서는 drop
         "wpa_change_abs": wpa_change_abs,
         "we_balance": we_balance,
         "inning_progress": inning_progress,

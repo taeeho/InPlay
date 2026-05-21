@@ -34,7 +34,15 @@ def train(
     learning_rate: float = 0.05,
     num_leaves: int = 11,
     seed: int = 42,
+    threshold: float = 0.5,
 ) -> TrainResult:
+    """Train clutch classifier with game_id-based train/holdout split.
+
+    Why game_id split (NOT row split): 같은 게임의 LiveEvent들은 시퀀스 상관관계가
+    강해서 row-shuffled split은 holdout 메트릭을 과대평가함. 게임 단위 leak-free.
+
+    threshold: precision/recall 보고용 cutoff. 0.5 기본, calibration은 W4 라벨 수집 후.
+    """
     df_raw = pd.read_csv(csv_path)
     errors = data_schema.validate(df_raw)
     if errors:
@@ -44,9 +52,14 @@ def train(
     if len(df_feat) < 20:
         raise ValueError(f"insufficient rows: have {len(df_feat)}, need >= 20")
 
-    holdout_n = max(int(len(df_feat) * holdout_ratio), 5)
-    train_df = df_feat.iloc[:-holdout_n]
-    holdout_df = df_feat.iloc[-holdout_n:]
+    game_ids = df_feat["game_id"].drop_duplicates().tolist()
+    if len(game_ids) < 2:
+        raise ValueError(f"need >= 2 distinct game_ids for split, have {len(game_ids)}")
+    holdout_games = max(int(round(len(game_ids) * holdout_ratio)), 1)
+    holdout_ids = set(game_ids[-holdout_games:])
+
+    train_df = df_feat[~df_feat["game_id"].isin(holdout_ids)]
+    holdout_df = df_feat[df_feat["game_id"].isin(holdout_ids)]
 
     feat_cols = list(features.FEATURE_COLUMNS)
     X_train = train_df[feat_cols].to_numpy()
@@ -65,7 +78,7 @@ def train(
     model.fit(X_train, y_train)
 
     proba = model.predict_proba(X_holdout)[:, 1]
-    preds = (proba >= 0.5).astype(int)
+    preds = (proba >= threshold).astype(int)
 
     out_dir.mkdir(parents=True, exist_ok=True)
     model_path = out_dir / "clutch_lgbm.txt"
