@@ -16,7 +16,7 @@
 
 ---
 
-## 현재 상태 (마지막 갱신: 2026-05-21, W4 코드 게이트 통과)
+## 현재 상태 (마지막 갱신: 2026-05-21, W4 코드 게이트 통과 + W5 사전 작업)
 
 ### 완료 (W0 — 골격)
 - [x] Plan 승인 + 메모리 등록
@@ -70,6 +70,13 @@
 - [x] **ADR-012** Accepted — Clutch 알림 4단계 필터 + retry semantics 결정 기록.
 - [x] **Codex 검토** 5 사이클 반영 (game_id split, MLB baseline 상수 이름, gameOver clamp 한계, dedupe 한계, retry semantics 등).
 - [x] **코드 게이트**: 전 모듈 `gradle test` BUILD SUCCESSFUL (총 ~190+ tests).
+
+### 완료 (W5 — 투수 한계 LSTM 사전 작업, 2026-05-21)
+- [x] **pitcher_limit trainer 스켈레톤** (`3b4a2fa`, `cbefa2b`) — `python/trainer/pitcher_limit/`. data_schema(10컬럼 pitch-level + 8 pitch_type) + features(outing 단위 sequence builder, max_seq_len trim/zero-pad) + train_lstm(PyTorch LSTM hidden=16, outing split) + export_onnx(opset 14, dynamic batch). 12 pytest.
+- [x] **ml-inference pitcher ONNX 래퍼** (`3b4a2fa`) — PitchSnapshot + PitcherLimitFeatures([1, maxSeqLen, 7] tensor) + PitcherLimitPredictor + parity test. 10 tests (1 EnabledIf-skipped).
+- [x] **torch==2.5.1** trainer requirements 추가.
+- [x] **ADR-013** Accepted — LSTM 사전 스켈레톤 + leak/drift 가드 계획 (outing vs pitcher leak 구분, model_metadata.json 계획).
+- [x] **Codex 검토 반영** — outing/pitcher leak 표현 정정, drift 가드 메모.
 
 ### 진행 중 (W2 데이터 게이트)
 - [ ] **(사용자 행동) trainer host venv 검증** — `cd python/trainer && python -m venv venv && source venv/bin/activate && pip install -r requirements.txt && pytest` 통과 확인
@@ -132,7 +139,9 @@ ADR-009로 headless 회색지대 운영 결정 — KBO `/Schedule/Schedule.aspx`
 - [ ] 🎯 **W4 완성 = 채용 어필 최소 임계 통과** (코드는 통과, 데이터 게이트 대기)
 
 ### W5 — DL 모델 + 투수 한계 예측
-- [ ] LSTM 투수 한계 모델 (PyTorch → ONNX → Java)
+- [x] LSTM 투수 한계 모델 **스켈레톤** (PyTorch + ONNX export + Java 래퍼 + parity test). ADR-013.
+- [ ] **데이터 게이트**: W3 pitch_log 수집 → 라벨 자동 추출 → 학습 + ONNX commit → parity 자동 활성
+- [ ] **GroupKFold pitcher_id** split 도입 + `model_metadata.json` (정규화 상수·max_seq_len) export — 본작업 진입 게이트
 - [ ] (선택) W2 LightGBM 승률 → LSTM 업그레이드
 - [ ] **Gate**: 투수 한계 AUC ≥ 0.72, 추론 latency p95 < 100ms
 
