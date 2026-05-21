@@ -17,6 +17,7 @@ val integrationTestRuntimeOnly: Configuration by configurations.getting {
 dependencies {
     implementation(project(":modules:core"))
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 
