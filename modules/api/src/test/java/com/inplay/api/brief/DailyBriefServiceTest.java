@@ -35,7 +35,7 @@ class DailyBriefServiceTest {
     private static final LocalDate TODAY = LocalDate.of(2026, 5, 20);
 
     private DailyBriefService newService(URI webhook) {
-        DefaultUserProperties user = new DefaultUserProperties("taeeho", com.inplay.core.domain.team.KboTeam.HH, "Asia/Seoul", webhook);
+        DefaultUserProperties user = new DefaultUserProperties("taeeho", com.inplay.core.domain.team.KboTeam.HH, "Asia/Seoul", webhook, null, null);
         Clock clock = Clock.fixed(TODAY.atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant(), ZoneId.of("Asia/Seoul"));
         BriefGenerator gen = new BriefGenerator(new WinProbabilityFeatureBuilder(), null);
         return new DailyBriefService(repository, gen, discord, user, clock);

@@ -40,7 +40,7 @@ class DashboardControllerTest {
 
     static class TestConfig {
         @Bean DefaultUserProperties user() {
-            return new DefaultUserProperties("taeeho", KboTeam.HH, "Asia/Seoul", null);
+            return new DefaultUserProperties("taeeho", KboTeam.HH, "Asia/Seoul", null, null, null);
         }
         @Bean Clock clock() {
             return Clock.fixed(TODAY.atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant(), ZoneId.of("Asia/Seoul"));

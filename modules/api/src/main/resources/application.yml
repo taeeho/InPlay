@@ -38,6 +38,12 @@ inplay:
       enabled: ${INPLAY_BRIEF_SCHEDULER_ENABLED:true}
     cron: ${INPLAY_BRIEF_CRON:0 0 8 * * *}
     timezone: ${INPLAY_BRIEF_TIMEZONE:Asia/Seoul}
+  clutch:
+    enabled: ${INPLAY_CLUTCH_ENABLED:true}
+    importance-threshold: ${INPLAY_CLUTCH_THRESHOLD:3.0}
+    cooldown: ${INPLAY_CLUTCH_COOLDOWN:PT5M}
+    dedupe-ttl: ${INPLAY_CLUTCH_DEDUPE_TTL:PT1M}
+    detector-threshold: ${INPLAY_CLUTCH_DETECTOR_THRESHOLD:0.7}
   collector:
     polling:
       schedule-interval: 5m
