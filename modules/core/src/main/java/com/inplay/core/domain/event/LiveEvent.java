@@ -12,9 +12,16 @@ import java.util.OptionalDouble;
 
 // LiveEvent — single live-game atomic event (PLAN.md §3 live_event schema).
 //
-// runners: 3-slot boolean array [first, second, third]. Matches PLAN's [1,1,1] notation.
-// sourceEventId: dedupe key (60s Caffeine cache + idempotent ingest).
-// wpaAfter: stamped post-ingest by the WPA annotator (decision/wpa) — empty on first ingest.
+// Field conventions (LOAD-BEARING — any source adapter must obey):
+//   runners: 3-slot boolean array. Index mapping is fixed:
+//            runners[0]=1루, runners[1]=2루, runners[2]=3루.
+//            Matches PLAN's [1,1,1] notation.
+//   outs:    outs AFTER the play (0..3). 3 means the half-inning ended on this event.
+//   score:   home/away runs AFTER the play. Sources that emit pre-play scores must adjust upstream.
+//   sourceEventId: dedupe key (60s Caffeine cache + idempotent ingest).
+//   wpaAfter:      home win expectancy AFTER this event, in [0.0, 1.0]. NOT a delta.
+//                  Stamped by decision/wpa/WpaAnnotator — empty on first ingest.
+//                  ΔWE (= conventional WPA) is recovered by subtracting consecutive events.
 public record LiveEvent(
         Instant eventTs,
         GameId gameId,
