@@ -76,6 +76,15 @@ class UserTest {
     }
 
     @Test
+    void rejectsRivalryWeightOutOfRange() {
+        assertThatThrownBy(() -> new User(
+                new UserId("u"), "n", VALID_HASH, KboTeam.HH,
+                Map.of(KboTeam.LG, 6.0), null, UserMuteWindow.disabled(), Instant.now()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("rivalry weight");
+    }
+
+    @Test
     void discordWebhookCanBeNull() {
         var u = new User(
                 new UserId("u"), "n", VALID_HASH, KboTeam.HH, Map.of(),

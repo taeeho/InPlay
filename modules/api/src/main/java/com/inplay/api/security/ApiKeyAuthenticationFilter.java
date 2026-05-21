@@ -37,6 +37,14 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
+        // 이미 다른 필터(basic auth 등)가 인증을 채웠다면 덮어쓰지 않음 — 안전한 합성.
+        var existing = SecurityContextHolder.getContext().getAuthentication();
+        if (existing != null && existing.isAuthenticated()
+                && !"anonymousUser".equals(existing.getPrincipal())) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         String rawKey = request.getHeader(HEADER);
         if (rawKey != null && !rawKey.isBlank()) {
             String hash = apiKeyService.hash(rawKey);

@@ -40,6 +40,14 @@ public record User(
         if (!apiKeyHash.matches("[0-9a-fA-F]{64}")) {
             throw new IllegalArgumentException("apiKeyHash must be hex");
         }
+        // rivalry weight 범위 검증 — importance scoring 이상값 방지 (Codex 검토).
+        for (var e : rivalryWeights.entrySet()) {
+            double w = e.getValue();
+            if (Double.isNaN(w) || w < 0.0 || w > 5.0) {
+                throw new IllegalArgumentException(
+                        "rivalry weight for " + e.getKey() + " must be in [0,5], got " + w);
+            }
+        }
         rivalryWeights = Map.copyOf(rivalryWeights);
     }
 
