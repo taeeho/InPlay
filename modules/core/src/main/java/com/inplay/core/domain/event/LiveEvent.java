@@ -73,4 +73,12 @@ public record LiveEvent(
         }
         return runners[base - 1];
     }
+
+    public LiveEvent withWpaAfter(double wpaAfter) {
+        return new LiveEvent(
+                eventTs, gameId, inning, half, eventType,
+                outs, runners, score, batterId, pitcherId, pitch,
+                OptionalDouble.of(wpaAfter),
+                source, sourceEventId);
+    }
 }

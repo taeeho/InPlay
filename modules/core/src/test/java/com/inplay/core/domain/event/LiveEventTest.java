@@ -78,6 +78,16 @@ class LiveEventTest {
     }
 
     @Test
+    void withWpaAfterReturnsCopyWithStampedValue() {
+        var base = sample();
+        assertThat(base.wpaAfter()).isEmpty();
+        var stamped = base.withWpaAfter(0.412);
+        assertThat(stamped.wpaAfter()).hasValue(0.412);
+        assertThat(base.wpaAfter()).isEmpty();
+        assertThat(stamped.sourceEventId()).isEqualTo(base.sourceEventId());
+    }
+
+    @Test
     void rejectsOutOfRangeOuts() {
         assertThatThrownBy(() -> new LiveEvent(
                 Instant.now(), new GameId("g"), 1, InningHalf.TOP,
