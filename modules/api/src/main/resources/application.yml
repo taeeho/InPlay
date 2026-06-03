@@ -61,6 +61,14 @@ inplay:
   notion:
     api-key: ${NOTION_API_KEY:}
     page-id: ${NOTION_INPLAY_PAGE_ID:}
+    journal-database-id: ${NOTION_JOURNAL_DATABASE_ID:}
+    version: ${NOTION_VERSION:2022-06-28}
+  journal:
+    # 종료 경기 → Notion season_journal 자동 기록. api-key/journal-database-id 미설정 시 skip.
+    scheduler:
+      enabled: ${INPLAY_JOURNAL_SCHEDULER_ENABLED:true}
+    cron: ${INPLAY_JOURNAL_CRON:0 30 23 * * *}
+    timezone: ${INPLAY_JOURNAL_TIMEZONE:Asia/Seoul}
 
 logging:
   level:

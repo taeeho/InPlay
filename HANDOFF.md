@@ -16,7 +16,7 @@
 
 ---
 
-## 현재 상태 (마지막 갱신: 2026-05-21, W4 코드 게이트 통과 + W5 사전 작업)
+## 현재 상태 (마지막 갱신: 2026-06-03, W6 Notion 시즌 일지 코드 완료)
 
 ### 완료 (W0 — 골격)
 - [x] Plan 승인 + 메모리 등록
@@ -77,6 +77,16 @@
 - [x] **torch==2.5.1** trainer requirements 추가.
 - [x] **ADR-013** Accepted — LSTM 사전 스켈레톤 + leak/drift 가드 계획 (outing vs pitcher leak 구분, model_metadata.json 계획).
 - [x] **Codex 검토 반영** — outing/pitcher leak 표현 정정, drift 가드 메모.
+
+### 완료 (W6 — Notion 시즌 일지 자동 생성, 2026-06-03, 미커밋)
+- [x] **journal 모듈** — `com.inplay.journal.season`: `SeasonJournalEntry`/`JournalOutcome` + `JournalEntryGenerator`(FINAL+myTeam 경기만, 승/패/무 판정) + `NotionClient`(`POST /v1/pages`, Bearer+Notion-Version, 4xx/5xx/network swallow+log+boolean — Discord 패턴) + `NotionJournalPage`(properties payload).
+- [x] **ingest** — `SeasonJournalDocument`(@Document season_journal) + `SeasonJournalRepository.existsByUserIdAndSeasonAndGameId` (중복 마커).
+- [x] **api** — `NotionProperties`(inplay.notion: apiKey/journalDatabaseId/version) + `JournalConfig`(NotionClient bean, timeout 3s/5s) + `SeasonJournalService`(exists→Notion POST→save, apiKey/dbId 없으면 skip, DuplicateKey catch) + `SeasonJournalScheduler`(`@Scheduled` cron 23:30 KST, `@ConditionalOnProperty`).
+- [x] application.yml `inplay.notion.{journal-database-id, version}` + `inplay.journal.{scheduler.enabled, cron, timezone}`.
+- [x] **ADR-014** Accepted — 일지 자동화 + 중복방지 단일 인스턴스 전제(다중 인스턴스 시 Notion 중복 가능, Mongo unique는 저장만 차단).
+- [x] **Codex 협의 2회**(설계+구현) 반영 — Entry↔Document 매핑 api로, NotionClient bean화, exists→POST→save 한계 ADR 명시, index 출처(mongo-init) 주석.
+- [x] **테스트 16개**(journal 11 + api 5) `make test` BUILD SUCCESSFUL.
+- [ ] **(사용자 1회 작업) Notion `season_journal` DB 생성** — 칼럼: 경기(title)/날짜(date)/시즌(number)/결과(select 승·패·무)/스코어(rich_text). 생성 후 `NOTION_API_KEY` + `NOTION_JOURNAL_DATABASE_ID` 설정하면 자동 동작.
 
 ### 진행 중 (W2 데이터 게이트)
 - [ ] **(사용자 행동) trainer host venv 검증** — `cd python/trainer && python -m venv venv && source venv/bin/activate && pip install -r requirements.txt && pytest` 통과 확인
@@ -146,10 +156,10 @@ ADR-009로 headless 회색지대 운영 결정 — KBO `/Schedule/Schedule.aspx`
 - [ ] **Gate**: 투수 한계 AUC ≥ 0.72, 추론 latency p95 < 100ms
 
 ### W6 — Post-game 시즌 일지 + User 도메인
-- [ ] Notion API 자동 일지 (`season_journal`, 사용자별)
-- [ ] User 도메인 + API key 인증 (Spring Security filter)
+- [x] Notion API 자동 일지 (`season_journal`) — journal 모듈 + api 스케줄러, ADR-014, 2026-06-03 (미커밋). multi-user는 W7.
+- [x] User 도메인 + API key 인증 (Spring Security filter) — W6 사전작업 `b63251a`
 - [ ] SportAdapter 추상화 + K리그 stub
-- [ ] **Gate**: 본인 5경기 일지 100%, API key 발급/검증 통과
+- [ ] **데이터 Gate**: 사용자 Notion DB 생성 + 본인 5경기 일지 100% 자동 생성 확인, API key 발급/검증 통과
 
 ### W7 — 사용자별 설정 + 알림 정책 분리
 - [ ] 사용자별 my_team/rivalry_weights/mute_window/webhook 설정 API
