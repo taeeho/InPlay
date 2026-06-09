@@ -42,9 +42,17 @@
 | W6 일지+User | ✅ (journal/user/apikey) | ✗ SportAdapter K리그 stub / Notion DB |
 | W7~W8 | 미착수 | - |
 
-## 최근 변경 (2026-06-09, 미커밋)
+## 최근 변경 (2026-06-09, push 완료)
 
 - KBO ToS 사람 확인 (자동수집 금지 없음 / 복제·재배포·상업 금지 제약 기록)
 - ADR-009 개정: `/ws/` XHR abort 제거 (일정이 `/ws/` AJAX로만 렌더)
 - `KboTeam` DOOSAN 수정, `KboScheduleParser` 실 DOM 재작성, 관련 테스트 재작성
 - `KboHeadlessLiveTest` + Makefile `test-headless` 타겟
+- 문서 4종 정리 (SPEC/STATE/WORKFLOW 신설 + HANDOFF 재정리)
+
+## 코드 점검 (2026-06-09)
+
+병렬 진단(미사용/중복/죽은설정) + 오탐 검증 수행. 결과:
+- **죽은 코드 2개 제거**: `WinProbabilityBrief.probability()`(Optional 래퍼, 미사용), `NotionProperties.pageId`(+yaml `page-id`, 미사용)
+- **보존**(오탐·예정): `DashboardRow.isFinal()`(Thymeleaf 5곳 사용), `AlertCategory` 4상수(예정 알림 어휘), `inplay.collector.polling/user-agent/rate-limit` yaml(polling wiring 시 외부화 예정)
+- **미적용 중복**(성급한 추상화 경계 — 필요 시 정리): `"Asia/Seoul"` 4곳, HTTP 타임아웃(3/5s) 3곳, 시즌시작일 `Month.MARCH,1` 2곳, 외부 client 에러처리 패턴(Discord/Notion)

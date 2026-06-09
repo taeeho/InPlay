@@ -11,6 +11,8 @@
 실데이터 입구(KBO 파싱)는 검증 끝. 이제 실제로 mongo에 적재되게 연결.
 - [ ] `make test-headless` 로 실 KBO fetch 1회 검증 — 먼저 Playwright 이미지 태그(`mcr.microsoft.com/playwright/java:v1.49.0-noble`) 존재 확인, 안 맞으면 태그 교정
 - [ ] `KboHeadlessScheduleSource` → `ingest`(GameDocument upsert) → 스케줄러(`@Scheduled`) wiring
+- [ ] application.yml `inplay.collector.kbo.mode` 를 `http` → **`headless`** 로 (http는 빈 골격만 받음)
+- [ ] 죽은 설정 외부화/정리: `inplay.collector.polling/user-agent/rate-limit` 를 `PollingMode`/`CollectorUserAgent` 와 연결하거나 제거. ⚠️ yaml `user-agent`(`inplay-bot/0.1`)와 코드 상수(`inplay/0.1`) **불일치** 해소
 - [ ] `make mongo-up` 후 7일치 fetch → `game` 컬렉션 적재 확인 (mongo-express)
 - [ ] W3 라이브: `live_event` 30초 polling 운영 연결
 
