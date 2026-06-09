@@ -60,7 +60,6 @@ inplay:
     model-dir: ${INPLAY_MODEL_DIR:modules/ml-inference/src/main/resources/models}
   notion:
     api-key: ${NOTION_API_KEY:}
-    page-id: ${NOTION_INPLAY_PAGE_ID:}
     journal-database-id: ${NOTION_JOURNAL_DATABASE_ID:}
     version: ${NOTION_VERSION:2022-06-28}
   journal:

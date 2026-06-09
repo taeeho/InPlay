@@ -41,7 +41,7 @@ class SeasonJournalServiceTest {
     }
 
     private NotionProperties notionProps(String apiKey, String dbId) {
-        return new NotionProperties(apiKey, null, dbId, "2022-06-28");
+        return new NotionProperties(apiKey, dbId, "2022-06-28");
     }
 
     private SeasonJournalService service(NotionProperties props) {

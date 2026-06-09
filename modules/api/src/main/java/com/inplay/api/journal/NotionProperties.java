@@ -8,7 +8,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "inplay.notion")
 public record NotionProperties(
         String apiKey,
-        String pageId,
         String journalDatabaseId,
         String version) {
 

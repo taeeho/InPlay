@@ -4,7 +4,6 @@ import com.inplay.core.domain.id.GameId;
 import com.inplay.core.domain.team.KboTeam;
 import java.time.LocalDate;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * Pre-game 브리핑 결과. predictor 없거나 history 부족 시 winProbability=null로 "모델 미준비" 상태.
@@ -32,10 +31,6 @@ public record WinProbabilityBrief(
                 throw new IllegalArgumentException("homeWinProbability must be in [0,1], got " + p);
             }
         }
-    }
-
-    public Optional<Double> probability() {
-        return Optional.ofNullable(homeWinProbability);
     }
 
     public boolean isModelReady() {
