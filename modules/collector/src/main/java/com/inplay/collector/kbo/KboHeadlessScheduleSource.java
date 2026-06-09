@@ -12,11 +12,12 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * KBO 일정을 headless 브라우저로 SSR된 DOM만 파싱. ADR-009 운영 조건 코드화.
+ * KBO 일정을 headless 브라우저로 렌더해 DOM 파싱. ADR-009 운영 조건 코드화.
  * - 브라우저 UA 명시 (정체 노출)
- * - /ws/** AJAX route abort (robots disallow path 회피)
  * - polling RateLimiter (분당 1회)
- * - RobotsGuard로 navigate URL 검증
+ * - RobotsGuard로 navigate URL 검증 (크롤러가 /ws/ 등을 직접 navigate 하는 것 차단)
+ * - ADR-009(2026-06-09 개정): 일정 데이터가 /ws/ AJAX로만 렌더되어 abort 시 수집 불가하므로,
+ *   페이지 렌더가 자동 트리거하는 /ws/ XHR은 허용(사람 브라우저 동일). 직접 호출은 robots로 계속 차단.
  */
 public final class KboHeadlessScheduleSource implements ScheduleSource {
 
@@ -27,7 +28,7 @@ public final class KboHeadlessScheduleSource implements ScheduleSource {
     private static final String RATE_LIMIT_KEY = "kbo:schedule:headless";
     private static final String SCHEDULE_TABLE_SELECTOR = "#tblScheduleList tr";
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
-    private static final List<String> ABORT_PATTERNS = List.of("**/ws/**");
+    private static final List<String> ABORT_PATTERNS = List.of();
 
     private final PageRenderer renderer;
     private final URI scheduleUrl;
@@ -65,6 +66,6 @@ public final class KboHeadlessScheduleSource implements ScheduleSource {
                 DEFAULT_TIMEOUT,
                 SCHEDULE_TABLE_SELECTOR);
         String html = renderer.render(scheduleUrl, options);
-        return parser.parse(html);
+        return parser.parse(html, from.getYear());
     }
 }

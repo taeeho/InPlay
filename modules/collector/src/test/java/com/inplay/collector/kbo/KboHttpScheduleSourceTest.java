@@ -24,11 +24,13 @@ class KboHttpScheduleSourceTest {
     private static final LocalDate TO = LocalDate.of(2026, 5, 18);
 
     private static final String FIXTURE_HTML = """
-            <table class="schedule">
-              <tr class="game" data-game-id="20260512HHLG" data-date="2026-05-12">
-                <td class="home">HH</td><td class="score">4-3</td><td class="away">LG</td><td class="status">FINAL</td>
+            <table id="tblScheduleList"><tbody>
+              <tr>
+                <td class="day">05.12(월)</td>
+                <td class="play"><span>한화</span><em><span class="win">4</span><span>vs</span><span class="lose">3</span></em><span>LG</span></td>
+                <td class="relay"><a href="?gameId=20260512HHLG0">리뷰</a></td>
               </tr>
-            </table>
+            </tbody></table>
             """;
 
     private record Fixture(RestClient client, MockRestServiceServer server) {}
@@ -53,7 +55,7 @@ class KboHttpScheduleSourceTest {
         f.server().expect(org.springframework.test.web.client.match.MockRestRequestMatchers
                         .requestTo("http://kbo.example/schedule?from=2026-05-12&to=2026-05-18"))
                 .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators
-                        .withSuccess(FIXTURE_HTML, org.springframework.http.MediaType.TEXT_HTML));
+                        .withSuccess(FIXTURE_HTML, org.springframework.http.MediaType.valueOf("text/html;charset=UTF-8")));
 
         var service = newService(
                 f.client(),
@@ -62,7 +64,7 @@ class KboHttpScheduleSourceTest {
 
         List<com.inplay.core.domain.game.Game> games = service.fetchSchedule(FROM, TO);
         assertThat(games).hasSize(1);
-        assertThat(games.get(0).id().value()).isEqualTo("20260512HHLG");
+        assertThat(games.get(0).id().value()).isEqualTo("20260512HHLG0");
         f.server().verify();
     }
 
@@ -93,7 +95,7 @@ class KboHttpScheduleSourceTest {
         f.server().expect(org.springframework.test.web.client.match.MockRestRequestMatchers
                         .requestTo("http://kbo.example/schedule?from=2026-05-12&to=2026-05-18"))
                 .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators
-                        .withSuccess(FIXTURE_HTML, org.springframework.http.MediaType.TEXT_HTML));
+                        .withSuccess(FIXTURE_HTML, org.springframework.http.MediaType.valueOf("text/html;charset=UTF-8")));
 
         var service = newService(f.client(), (url, ua) -> true, limiter);
 

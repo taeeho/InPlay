@@ -37,6 +37,6 @@ public final class KboHttpScheduleSource implements ScheduleSource {
             return List.of();
         }
         String html = client.fetchScheduleHtml(from, to);
-        return parser.parse(html);
+        return parser.parse(html, from.getYear());
     }
 }

@@ -28,11 +28,13 @@ class KboHeadlessScheduleSourceTest {
 
     private static final String FIXTURE_HTML = """
             <html><body>
-            <table id="tblScheduleList" class="schedule">
-              <tr class="game" data-game-id="20260512HHLG" data-date="2026-05-12">
-                <td class="home">HH</td><td class="score">4-3</td><td class="away">LG</td><td class="status">FINAL</td>
+            <table id="tblScheduleList"><tbody>
+              <tr>
+                <td class="day">05.12(월)</td>
+                <td class="play"><span>한화</span><em><span class="win">4</span><span>vs</span><span class="lose">3</span></em><span>LG</span></td>
+                <td class="relay"><a href="?gameId=20260512HHLG0">리뷰</a></td>
               </tr>
-            </table>
+            </tbody></table>
             </body></html>
             """;
 
@@ -56,13 +58,14 @@ class KboHeadlessScheduleSourceTest {
 
         List<Game> games = source.fetchSchedule(FROM, TO);
         assertThat(games).hasSize(1);
-        assertThat(games.get(0).id().value()).isEqualTo("20260512HHLG");
+        assertThat(games.get(0).id().value()).isEqualTo("20260512HHLG0");
 
         assertThat(capturedUrl.get()).isEqualTo(SCHEDULE_URL);
         assertThat(capturedOpts.get().userAgent())
                 .contains("inplay-headless/0.1")
                 .contains("ai@ccfm.co.kr");
-        assertThat(capturedOpts.get().abortPatterns()).contains("**/ws/**");
+        // ADR-009(2026-06-09 개정): /ws/ XHR abort 제거 — 일정이 /ws/ AJAX로만 렌더됨
+        assertThat(capturedOpts.get().abortPatterns()).isEmpty();
         assertThat(capturedOpts.get().waitForSelector()).isEqualTo("#tblScheduleList tr");
         assertThat(capturedOpts.get().timeout()).isEqualTo(Duration.ofSeconds(30));
     }

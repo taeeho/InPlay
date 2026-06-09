@@ -12,7 +12,7 @@ public enum KboTeam {
     NC,
     SAMSUNG,
     LOTTE,
-    HAN;
+    DOOSAN;
 
     public String code() {
         return name();

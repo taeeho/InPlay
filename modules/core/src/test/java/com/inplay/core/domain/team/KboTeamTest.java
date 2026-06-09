@@ -17,7 +17,7 @@ class KboTeamTest {
         assertThat(KboTeam.values())
                 .extracting(Enum::name)
                 .containsExactlyInAnyOrder(
-                        "HH", "LG", "KIA", "SSG", "KT", "KIWOOM", "NC", "SAMSUNG", "LOTTE", "HAN");
+                        "HH", "LG", "KIA", "SSG", "KT", "KIWOOM", "NC", "SAMSUNG", "LOTTE", "DOOSAN");
     }
 
     @Test
@@ -28,7 +28,7 @@ class KboTeamTest {
 
     @Test
     void fromCodeUnknownRejected() {
-        assertThatThrownBy(() -> KboTeam.fromCode("DOOSAN"))
+        assertThatThrownBy(() -> KboTeam.fromCode("OB"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("unknown");
     }

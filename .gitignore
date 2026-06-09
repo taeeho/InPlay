@@ -75,3 +75,6 @@ log/
 .metals/
 .bloop/
 .history/
+
+# === Playwright MCP 스냅샷 (KBO 페이지 데이터 — ToS상 커밋 금지) ===
+.playwright-mcp/
