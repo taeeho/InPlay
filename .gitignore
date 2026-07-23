@@ -78,3 +78,8 @@ log/
 
 # === Playwright MCP 스냅샷 (KBO 페이지 데이터 — ToS상 커밋 금지) ===
 .playwright-mcp/
+
+# AI agent local files
+CLAUDE.local.md
+AGENTS.override.md
+.claude/settings.local.json

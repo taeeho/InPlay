@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Codex 등 에이전트(write 모드)의 직접 push 차단.
+# Claude의 push는 ~/.claude/settings.json deny가 막고, 사용자의 ! 실행·터미널 실행은 통과시킨다.
+if [ -n "$CODEX_SANDBOX" ] || [ -n "$CODEX_THREAD_ID" ] || [ -n "$CODEX_CI" ]; then
+  echo "[pre-push] 에이전트(Codex)의 push가 차단되었습니다. 터미널에서 직접 실행하세요: git push" >&2
+  exit 1
+fi
+exit 0
