@@ -45,17 +45,18 @@ inplay:
     dedupe-ttl: ${INPLAY_CLUTCH_DEDUPE_TTL:PT1M}
     detector-threshold: ${INPLAY_CLUTCH_DETECTOR_THRESHOLD:0.7}
   collector:
-    polling:
-      schedule-interval: 5m
-      live-game-interval: 30s
-      offseason-news-interval: 1h
-    user-agent: "inplay-bot/0.1 (https://github.com/taeeho/InPlay; learning purpose; contact via github)"
-    rate-limit-per-minute: 60
     kbo:
       schedule-url: ${INPLAY_KBO_SCHEDULE_URL:https://www.koreabaseball.com/Schedule/Schedule.aspx}
       # http: jsoup-only(데이터 비어있음, W1 게이트 통과 X)
-      # headless: Playwright SSR 렌더링 후 DOM 파싱 (ADR-008/009)
-      mode: ${INPLAY_KBO_COLLECTOR_MODE:http}
+      # headless: Playwright SSR 렌더링 후 DOM 파싱 (ADR-008/009) — 운영 기본값
+      mode: ${INPLAY_KBO_COLLECTOR_MODE:headless}
+    schedule:
+      # KBO 일정 주기 수집 → mongo game upsert. UA는 코드 상수(KboHeadlessScheduleSource.USER_AGENT / CollectorUserAgent.VALUE).
+      enabled: ${INPLAY_COLLECTOR_SCHEDULE_ENABLED:true}
+      interval: ${INPLAY_COLLECTOR_SCHEDULE_INTERVAL:5m}
+      initial-delay: ${INPLAY_COLLECTOR_SCHEDULE_INITIAL_DELAY:10s}
+      window-days: ${INPLAY_COLLECTOR_SCHEDULE_WINDOW_DAYS:7}
+    # W3 라이브 이벤트 polling(30s)·비시즌 뉴스 수집은 미구현 — 별도 config 로 추가 예정.
   ml:
     model-dir: ${INPLAY_MODEL_DIR:modules/ml-inference/src/main/resources/models}
   notion:
